@@ -1,0 +1,63 @@
+---
+title: "Untitled"
+author: "Michael Metzler"
+date: "February 18, 2019"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Most Popular Names Today
+Here, I looked at the historical popularity of the 100 most popular names from the most recent year in the dataset, 2017.
+```{r}
+library(tidyverse)
+library(babynames)
+library(streamgraph)
+library(magrittr)
+names_df<-babynames
+#find the most recent year in the babynames data frame
+most_recent_year<-babynames$year%>%max()
+#find the 100 most popular names for that year
+popular_recent_names<-babynames%>%filter(year==most_recent_year)%>%arrange(desc(n))%>%head(100)%>%pull(name)
+
+names_df%<>%filter(name %in% popular_recent_names)%>%group_by(name,year)%>%tally(wt = n)
+
+names_df%>%streamgraph("name","n","year")
+```
+
+##Most Popular Names Historically
+Here, I looked at the historical popularity of the 100 most popular names from the first year in the data set, 1880.
+```{r}
+names_df<-babynames
+#find the most recent year in the babynames data frame
+least_recent_year<-babynames$year%>%min()
+#find the 100 most popular names for that year
+popular_old_names<-babynames%>%filter(year==least_recent_year)%>%arrange(desc(n))%>%head(100)%>%pull(name)
+
+names_df%<>%filter(name %in% popular_old_names)%>%group_by(name,year)%>%tally(wt = n)
+
+names_df%>%streamgraph("name","n","year")
+```
+
+##Observation on the babynames Data Set
+There appears to be some shift in the record keeping around 1910 that results in far more names and births being reported. This was apparent graphs of both the current and historical popular names, so I decided to look a bit deeper. The number of baby names reported names trippled between 1910 and 1915, with 1.2 million more births/names reported in 1915 than in 1910. The increase in the raw number of births/names is greater than any 5 year period in history, including the post WWII baby boom, and the percentage increase in reported births/names is far higher than any other period. The following graphs and tables show this phenomenon.
+
+```{r}
+births_by_year<-babynames%>%group_by(year)%>%summarise(total_births = sum(n))
+ggplot(births_by_year)+geom_line(aes(x = year,y = total_births))
+```
+
+```{r}
+births_by_year%>%filter(year>=1905,year<=1920)%>%knitr::kable()
+```
+
+```{r}
+baby_boom<-births_by_year%>%filter(year>=1940,year<=1955)
+baby_boom%>%knitr::kable()
+```
+
+My Github account is https://github.com/bballmike823
